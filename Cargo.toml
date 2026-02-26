@@ -1,0 +1,27 @@
+[package]
+name = "anisette-rs"
+version = "0.1.0"
+edition = "2024"
+build = "build.rs"
+
+[lib]
+crate-type = ["cdylib", "rlib", "staticlib"]
+
+[[example]]
+name = "anisette"
+path = "example/anisette.rs"
+
+[dependencies]
+anyhow = "1.0.100"
+base64 = "0.22.1"
+chrono = { version = "0.4.42", default-features = false, features = ["clock"] }
+goblin = "0.10.4"
+plist = "1.8.0"
+rand = "0.8.5"
+reqwest = { version = "0.12.24", default-features = false, features = ["blocking", "rustls-tls"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+thiserror = "2.0.17"
+# unicorn-engine = { version = "=2.1.1", default-features = false, features = ["arch_arm", "arch_aarch64"] }
+unicorn-engine = { path = "../unicorn" }
+uuid = { version = "1.18.1", features = ["v4"] }

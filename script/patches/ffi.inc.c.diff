@@ -1,0 +1,66 @@
+diff --git a/qemu/tcg/ffi.inc.c b/qemu/tcg/ffi.inc.c
+index f0300a76..68ea4ebc 100644
+--- a/qemu/tcg/ffi.inc.c
++++ b/qemu/tcg/ffi.inc.c
+@@ -19,6 +19,7 @@ static int debug_info(TCGHelperInfo *info) {
+ 	printf("sizemask: 0x%x\n", info->sizemask);
+ 	printf("n_args: %d\n", info->n_args);
+ 	printf("t0: %lu\n", (uintptr_t)info->func);
++	return 0;
+ }
+ 
+ static uint64_t do_op_call(tcg_target_ulong *regs, tcg_target_ulong t0) {
+@@ -32,20 +33,50 @@ static uint64_t do_op_call(tcg_target_ulong *regs, tcg_target_ulong t0) {
+ 
+ 	// Manual ABI interventions (wasm32 requires very specific conventions for uint64_t)
+ #if TCG_TARGET_REG_BITS == 32
+-	if (info->flags & dh_callflag_void && info->sizemask == 0x10 && info->n_args == 4) {
+-	    ((void (*)(uint32_t, uint64_t, uint32_t, uint32_t))t0)(tci_read_reg(regs, TCG_REG_R0), tci_read_reg_ext(regs, TCG_REG_R1), tci_read_reg(regs, TCG_REG_R3), tci_read_reg(regs, TCG_REG_R4));
++    if (info->name && strcmp(info->name, "uc_tracecode") == 0) {
++        uint64_t trace_addr = tci_read_reg_ext(regs, TCG_REG_R3);
++        // printf("ffi wasm32 fastpath: uc_tracecode r0=%u r1=%u r2=%lu addr=0x%llx\n",
++        //        (unsigned)tci_read_reg(regs, TCG_REG_R0),
++        //        (unsigned)tci_read_reg(regs, TCG_REG_R1),
++        //        (unsigned long)tci_read_reg(regs, TCG_REG_R2),
++        //        (unsigned long long)trace_addr);
++        ((void (*)(uint32_t, uint32_t, uintptr_t, uint64_t))t0)(
++            tci_read_reg(regs, TCG_REG_R0),
++            tci_read_reg(regs, TCG_REG_R1),
++            (uintptr_t)tci_read_reg(regs, TCG_REG_R2),
++            trace_addr
++        );
++        return 0;
++    }
++
++    if (info->flags & dh_callflag_void && info->sizemask == 0x10 && info->n_args == 4) {
++        ((void (*)(uint32_t, uint32_t, uint64_t, uint32_t))t0)(
++            tci_read_reg(regs, TCG_REG_R0),
++            tci_read_reg(regs, TCG_REG_R1),
++            tci_read_reg_ext(regs, TCG_REG_R2),
++            tci_read_reg(regs, TCG_REG_R4)
++        );
+ 	    return 0;
+ 	} else if (info->sizemask == 0x255 && info->n_args == 4) {
+ 	    return ((uint64_t (*)(uint64_t, uint64_t, uint64_t, uint32_t))t0)(tci_read_reg_ext(regs, TCG_REG_R0), tci_read_reg_ext(regs, TCG_REG_R2), tci_read_reg_ext(regs, TCG_REG_R4), tci_read_reg(regs, TCG_REG_R7));
+ 	} else if (info->sizemask == 4 && info->n_args == 3) {
+ 	    return ((uint32_t (*)(uint64_t, uint32_t, uint32_t))t0)(tci_read_reg_ext(regs, TCG_REG_R0), tci_read_reg(regs, TCG_REG_R2), tci_read_reg(regs, TCG_REG_R3));
+ 	} else if ((info->sizemask == 0x15 || info->sizemask == 0x3f) && info->n_args == 2) {
+-	    return ((uint64_t (*)(uint64_t, uint64_t))t0)(tci_read_reg_ext(regs, TCG_REG_R0), tci_read_reg(regs, TCG_REG_R2));
++	    return ((uint64_t (*)(uint64_t, uint64_t))t0)(tci_read_reg_ext(regs, TCG_REG_R0), tci_read_reg_ext(regs, TCG_REG_R2));
+ 	} else if (info->sizemask == 0x40 && info->n_args == 3) {
+ 	    ((void (*)(uintptr_t, uintptr_t, uint64_t))t0)(tci_read_reg(regs, TCG_REG_R0), tci_read_reg(regs, TCG_REG_R1), tci_read_reg_ext(regs, TCG_REG_R2));
+ 	    return 0;
+ 	} else if (info->sizemask == 0x15 && info->n_args == 3) {
+ 	    return ((uint64_t (*)(uint64_t, uint64_t, uint32_t))t0)(tci_read_reg_ext(regs, TCG_REG_R0), tci_read_reg_ext(regs, TCG_REG_R2), tci_read_reg(regs, TCG_REG_R4));
++	} else if (info->sizemask == 0x4 && info->n_args == 1) {
++	    // helper with arg shape (i64) -> i32, e.g., neon_narrow_u16, neon_narrow_high_u8, iwmmxt_setpsr_nz
++	    return ((uint32_t (*)(uint64_t))t0)(tci_read_reg_ext(regs, TCG_REG_R0));
++	} else if (info->sizemask == 0x4 && info->n_args == 2) {
++	    // helper with arg shape (env, i64) -> i32, e.g., neon_narrow_sat_u8 (env is ptr)
++	    return ((uint32_t (*)(uintptr_t, uint64_t))t0)(
++	        tci_read_reg(regs, TCG_REG_R0),
++	        tci_read_reg_ext(regs, TCG_REG_R1)
++	    );
+ 	}
+ 
+ 	for (int i = 1; i < 15; i++) {

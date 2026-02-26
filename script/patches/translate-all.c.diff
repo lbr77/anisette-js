@@ -1,0 +1,16 @@
+diff --git a/qemu/accel/tcg/translate-all.c b/qemu/accel/tcg/translate-all.c
+index 0524fefd..9bc1fd39 100644
+--- a/qemu/accel/tcg/translate-all.c
++++ b/qemu/accel/tcg/translate-all.c
+@@ -862,6 +862,11 @@ static inline void *alloc_code_gen_buffer(struct uc_struct *uc)
+ 
+     return buf;
+ }
++
++void free_code_gen_buffer(struct uc_struct *uc)
++{
++    (void)uc;
++}
+ #elif defined(_WIN32)
+ #define COMMIT_COUNT (1024) // Commit 4MB per exception
+ #define CLOSURE_SIZE (4096)

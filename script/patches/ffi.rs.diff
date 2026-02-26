@@ -1,0 +1,191 @@
+diff --git a/bindings/rust/src/ffi.rs b/bindings/rust/src/ffi.rs
+index 7f7a205b..d812e8cd 100644
+--- a/bindings/rust/src/ffi.rs
++++ b/bindings/rust/src/ffi.rs
+@@ -121,9 +121,15 @@ pub unsafe extern "C" fn mmio_read_callback_proxy<D, F>(
+ where
+     F: FnMut(&mut crate::Unicorn<D>, u64, usize) -> u64,
+ {
++    if user_data.is_null() {
++        return 0;
++    }
+     let user_data = &mut *user_data;
++    let Some(inner) = user_data.uc.upgrade() else {
++        return 0;
++    };
+     let mut user_data_uc = Unicorn {
+-        inner: user_data.uc.upgrade().unwrap(),
++        inner,
+     };
+     debug_assert_eq!(uc, user_data_uc.get_handle());
+     (user_data.callback)(&mut user_data_uc, offset, size)
+@@ -138,9 +144,15 @@ pub unsafe extern "C" fn mmio_write_callback_proxy<D, F>(
+ ) where
+     F: FnMut(&mut crate::Unicorn<D>, u64, usize, u64),
+ {
++    if user_data.is_null() {
++        return;
++    }
+     let user_data = &mut *user_data;
++    let Some(inner) = user_data.uc.upgrade() else {
++        return;
++    };
+     let mut user_data_uc = Unicorn {
+-        inner: user_data.uc.upgrade().unwrap(),
++        inner,
+     };
+     debug_assert_eq!(uc, user_data_uc.get_handle());
+     (user_data.callback)(&mut user_data_uc, offset, size, value);
+@@ -154,9 +166,15 @@ pub unsafe extern "C" fn code_hook_proxy<D, F>(
+ ) where
+     F: FnMut(&mut crate::Unicorn<D>, u64, u32),
+ {
++    if user_data.is_null() {
++        return;
++    }
+     let user_data = &mut *user_data;
++    let Some(inner) = user_data.uc.upgrade() else {
++        return;
++    };
+     let mut user_data_uc = Unicorn {
+-        inner: user_data.uc.upgrade().unwrap(),
++        inner,
+     };
+     debug_assert_eq!(uc, user_data_uc.get_handle());
+     (user_data.callback)(&mut user_data_uc, address, size);
+@@ -170,9 +188,15 @@ pub unsafe extern "C" fn block_hook_proxy<D, F>(
+ ) where
+     F: FnMut(&mut crate::Unicorn<D>, u64, u32),
+ {
++    if user_data.is_null() {
++        return;
++    }
+     let user_data = &mut *user_data;
++    let Some(inner) = user_data.uc.upgrade() else {
++        return;
++    };
+     let mut user_data_uc = Unicorn {
+-        inner: user_data.uc.upgrade().unwrap(),
++        inner,
+     };
+     debug_assert_eq!(uc, user_data_uc.get_handle());
+     (user_data.callback)(&mut user_data_uc, address, size);
+@@ -189,9 +213,15 @@ pub unsafe extern "C" fn mem_hook_proxy<D, F>(
+ where
+     F: FnMut(&mut crate::Unicorn<D>, MemType, u64, usize, i64) -> bool,
+ {
++    if user_data.is_null() {
++        return false;
++    }
+     let user_data = &mut *user_data;
++    let Some(inner) = user_data.uc.upgrade() else {
++        return false;
++    };
+     let mut user_data_uc = Unicorn {
+-        inner: user_data.uc.upgrade().unwrap(),
++        inner,
+     };
+     debug_assert_eq!(uc, user_data_uc.get_handle());
+     (user_data.callback)(&mut user_data_uc, mem_type, address, size as usize, value)
+@@ -204,9 +234,15 @@ pub unsafe extern "C" fn intr_hook_proxy<D, F>(
+ ) where
+     F: FnMut(&mut crate::Unicorn<D>, u32),
+ {
++    if user_data.is_null() {
++        return;
++    }
+     let user_data = &mut *user_data;
++    let Some(inner) = user_data.uc.upgrade() else {
++        return;
++    };
+     let mut user_data_uc = Unicorn {
+-        inner: user_data.uc.upgrade().unwrap(),
++        inner,
+     };
+     debug_assert_eq!(uc, user_data_uc.get_handle());
+     (user_data.callback)(&mut user_data_uc, value);
+@@ -221,9 +257,15 @@ pub unsafe extern "C" fn insn_in_hook_proxy<D, F>(
+ where
+     F: FnMut(&mut crate::Unicorn<D>, u32, usize) -> u32,
+ {
++    if user_data.is_null() {
++        return 0;
++    }
+     let user_data = &mut *user_data;
++    let Some(inner) = user_data.uc.upgrade() else {
++        return 0;
++    };
+     let mut user_data_uc = Unicorn {
+-        inner: user_data.uc.upgrade().unwrap(),
++        inner,
+     };
+     debug_assert_eq!(uc, user_data_uc.get_handle());
+     (user_data.callback)(&mut user_data_uc, port, size)
+@@ -236,9 +278,15 @@ pub unsafe extern "C" fn insn_invalid_hook_proxy<D, F>(
+ where
+     F: FnMut(&mut crate::Unicorn<D>) -> bool,
+ {
++    if user_data.is_null() {
++        return false;
++    }
+     let user_data = &mut *user_data;
++    let Some(inner) = user_data.uc.upgrade() else {
++        return false;
++    };
+     let mut user_data_uc = Unicorn {
+-        inner: user_data.uc.upgrade().unwrap(),
++        inner,
+     };
+     debug_assert_eq!(uc, user_data_uc.get_handle());
+     (user_data.callback)(&mut user_data_uc)
+@@ -253,9 +301,15 @@ pub unsafe extern "C" fn insn_out_hook_proxy<D, F>(
+ ) where
+     F: FnMut(&mut crate::Unicorn<D>, u32, usize, u32),
+ {
++    if user_data.is_null() {
++        return;
++    }
+     let user_data = &mut *user_data;
++    let Some(inner) = user_data.uc.upgrade() else {
++        return;
++    };
+     let mut user_data_uc = Unicorn {
+-        inner: user_data.uc.upgrade().unwrap(),
++        inner,
+     };
+     debug_assert_eq!(uc, user_data_uc.get_handle());
+     (user_data.callback)(&mut user_data_uc, port, size, value);
+@@ -265,9 +319,15 @@ pub unsafe extern "C" fn insn_sys_hook_proxy<D, F>(uc: uc_handle, user_data: *mu
+ where
+     F: FnMut(&mut crate::Unicorn<D>),
+ {
++    if user_data.is_null() {
++        return;
++    }
+     let user_data = &mut *user_data;
++    let Some(inner) = user_data.uc.upgrade() else {
++        return;
++    };
+     let mut user_data_uc = Unicorn {
+-        inner: user_data.uc.upgrade().unwrap(),
++        inner,
+     };
+     debug_assert_eq!(uc, user_data_uc.get_handle());
+     (user_data.callback)(&mut user_data_uc);
+@@ -283,9 +343,15 @@ pub unsafe extern "C" fn tlb_lookup_hook_proxy<D, F>(
+ where
+     F: FnMut(&mut crate::Unicorn<D>, u64, MemType) -> Option<TlbEntry>,
+ {
++    if user_data.is_null() {
++        return false;
++    }
+     let user_data = &mut *user_data;
++    let Some(inner) = user_data.uc.upgrade() else {
++        return false;
++    };
+     let mut user_data_uc = Unicorn {
+-        inner: user_data.uc.upgrade().unwrap(),
++        inner,
+     };
+     debug_assert_eq!(uc, user_data_uc.get_handle());
+     let r = (user_data.callback)(&mut user_data_uc, vaddr, mem_type);
