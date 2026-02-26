@@ -7,7 +7,7 @@ if [[ "${1:-}" == "--release" ]]; then
 fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TARGET_DIR="${ROOT_DIR}/../target/wasm32-unknown-emscripten/${BUILD_MODE}"
+TARGET_DIR="${ROOT_DIR}/target/wasm32-unknown-emscripten/${BUILD_MODE}"
 DIST_DIR="${ROOT_DIR}/dist"
 EMSDK_DIR="${EMSDK:-/Users/libr/Desktop/Life/emsdk}"
 UNICORN_BUILD_DIR="${UNICORN_BUILD_DIR:-${ROOT_DIR}/../unicorn/build}"
