@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Release tag (e.g., v1.0.0). Leave empty for dev build.'
+        required: false
+        default: ''
 
 env:
   CARGO_TERM_COLOR: always
@@ -20,7 +26,7 @@ jobs:
         with:
           submodules: false
 
-      - name: Install Rust nightly
+      - name: Install Rust with wasm32-unknown-emscripten target
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
@@ -53,16 +59,20 @@ jobs:
         if: steps.cache-unicorn.outputs.cache-hit != 'true'
         run: |
           bash script/rebuild-unicorn.sh
+        working-directory: anisette-rs
         env:
           UNICORN_DIR: ${{ github.workspace }}/../unicorn
           UNICORN_BUILD_DIR: ${{ github.workspace }}/../unicorn/build
           JOBS: 4
+          EMSDK: ${{ runner.tool_cache }}/emsdk
 
       - name: Build WASM glue
         run: |
-          bash script/build-glue --release
+          bash script/build-glue.sh --release
+        working-directory: anisette-rs
         env:
           UNICORN_BUILD_DIR: ${{ github.workspace }}/../unicorn/build
+          EMSDK: ${{ runner.tool_cache }}/emsdk
 
       - name: Upload WASM artifacts
         uses: actions/upload-artifact@v4
@@ -74,3 +84,15 @@ jobs:
             dist/anisette_rs.node.js
             dist/anisette_rs.node.wasm
           retention-days: 7
+
+      - name: Upload to Release
+        if: github.event_name == 'workflow_dispatch' && inputs.release != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release }}
+          files: |
+            dist/anisette_rs.js
+            dist/anisette_rs.wasm
+            dist/anisette_rs.node.js
+            dist/anisette_rs.node.wasm
+          generate_release_notes: true
