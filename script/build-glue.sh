@@ -8,7 +8,7 @@ fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET_DIR="${ROOT_DIR}/../target/wasm32-unknown-emscripten/${BUILD_MODE}"
-DIST_DIR="${ROOT_DIR}/test/dist"
+DIST_DIR="${ROOT_DIR}/dist"
 EMSDK_DIR="${EMSDK:-/Users/libr/Desktop/Life/emsdk}"
 UNICORN_BUILD_DIR="${UNICORN_BUILD_DIR:-${ROOT_DIR}/../unicorn/build}"
 NODE_DIST_JS="${DIST_DIR}/anisette_rs.node.js"
@@ -95,5 +95,8 @@ echo "  ${DIST_DIR}/anisette_rs.wasm"
 echo "  ${NODE_DIST_JS}"
 echo "  ${NODE_DIST_WASM}"
 
-cp "${DIST_DIR}/anisette_rs.js" "${ROOT_DIR}/../../frontend/public/anisette/anisette_rs.js"
-cp "${DIST_DIR}/anisette_rs.wasm" "${ROOT_DIR}/../../frontend/public/anisette/anisette_rs.wasm"
+# Copy to frontend if directory exists (skip in CI if not present)
+if [[ -d "${ROOT_DIR}/../../frontend/public/anisette" ]]; then
+  cp "${DIST_DIR}/anisette_rs.js" "${ROOT_DIR}/../../frontend/public/anisette/anisette_rs.js"
+  cp "${DIST_DIR}/anisette_rs.wasm" "${ROOT_DIR}/../../frontend/public/anisette/anisette_rs.wasm"
+fi
