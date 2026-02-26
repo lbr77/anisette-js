@@ -59,7 +59,6 @@ jobs:
         if: steps.cache-unicorn.outputs.cache-hit != 'true'
         run: |
           bash script/rebuild-unicorn.sh
-        working-directory: anisette-rs
         env:
           UNICORN_DIR: ${{ github.workspace }}/../unicorn
           UNICORN_BUILD_DIR: ${{ github.workspace }}/../unicorn/build
@@ -69,7 +68,6 @@ jobs:
       - name: Build WASM glue
         run: |
           bash script/build-glue.sh --release
-        working-directory: anisette-rs
         env:
           UNICORN_BUILD_DIR: ${{ github.workspace }}/../unicorn/build
           EMSDK: ${{ runner.tool_cache }}/emsdk
