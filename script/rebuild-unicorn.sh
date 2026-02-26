@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-EMSDK_DIR="${EMSDK:-/Users/libr/Desktop/Life/emsdk}"
+# EMSDK_DIR="${EMSDK:-/Users/libr/Desktop/Life/emsdk}"
 UNICORN_DIR="${UNICORN_DIR:-${ROOT_DIR}/../unicorn}"
 UNICORN_BUILD_DIR="${UNICORN_BUILD_DIR:-${UNICORN_DIR}/build}"
 JOBS="${JOBS:-8}"
@@ -13,13 +13,13 @@ if [[ ! -d "${UNICORN_DIR}" ]]; then
   exit 1
 fi
 
-if [[ -f "${EMSDK_DIR}/emsdk_env.sh" ]]; then
-  # shellcheck disable=SC1090
-  source "${EMSDK_DIR}/emsdk_env.sh" >/dev/null
-else
-  echo "emsdk_env.sh not found at ${EMSDK_DIR}/emsdk_env.sh"
-  exit 1
-fi
+# if [[ -f "${EMSDK_DIR}/emsdk_env.sh" ]]; then
+#   # shellcheck disable=SC1090
+#   source "${EMSDK_DIR}/emsdk_env.sh" >/dev/null
+# else
+#   echo "emsdk_env.sh not found at ${EMSDK_DIR}/emsdk_env.sh"
+#   exit 1
+# fi
 
 # if [[ -d "${PATCH_DIR}" ]]; then
 #   for patch_file in "${PATCH_DIR}"/*.diff; do

@@ -9,7 +9,7 @@ fi
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET_DIR="${ROOT_DIR}/target/wasm32-unknown-emscripten/${BUILD_MODE}"
 DIST_DIR="${ROOT_DIR}/dist"
-EMSDK_DIR="${EMSDK:-/Users/libr/Desktop/Life/emsdk}"
+# EMSDK_DIR="${EMSDK:-/Users/libr/Desktop/Life/emsdk}"
 UNICORN_BUILD_DIR="${UNICORN_BUILD_DIR:-${ROOT_DIR}/../unicorn/build}"
 NODE_DIST_JS="${DIST_DIR}/anisette_rs.node.js"
 NODE_DIST_WASM="${DIST_DIR}/anisette_rs.node.wasm"
@@ -21,13 +21,13 @@ NODE_EXPORTED_FUNCTIONS='["_malloc","_free","_anisette_init_from_blobs","_aniset
 WEB_EXPORTED_RUNTIME_METHODS='["FS","HEAPU8","UTF8ToString","stringToUTF8","lengthBytesUTF8"]'
 NODE_EXPORTED_RUNTIME_METHODS='["HEAPU8","UTF8ToString","stringToUTF8","lengthBytesUTF8"]'
 
-if [[ -f "${EMSDK_DIR}/emsdk_env.sh" ]]; then
-  # shellcheck disable=SC1090
-  source "${EMSDK_DIR}/emsdk_env.sh" >/dev/null
-else
-  echo "emsdk_env.sh not found at ${EMSDK_DIR}/emsdk_env.sh"
-  exit 1
-fi
+# if [[ -f "${EMSDK_DIR}/emsdk_env.sh" ]]; then
+#   # shellcheck disable=SC1090
+#   source "${EMSDK_DIR}/emsdk_env.sh" >/dev/null
+# else
+#   echo "emsdk_env.sh not found at ${EMSDK_DIR}/emsdk_env.sh"
+#   exit 1
+# fi
 
 mkdir -p "${DIST_DIR}"
 
