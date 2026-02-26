@@ -36,7 +36,7 @@ jobs:
         uses: mymindstorm/setup-emsdk@v14
         with:
           version: ${{ env.EMSDK_VERSION }}
-          actions-cache-folder: emsdk-cache
+          no-cache: true
 
       - name: Install CMake
         run: |
