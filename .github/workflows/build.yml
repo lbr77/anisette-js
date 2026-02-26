@@ -60,7 +60,7 @@ jobs:
 
       - name: Build WASM glue
         run: |
-          bash script/build-glue.sh
+          bash script/build-glue --release
         env:
           UNICORN_BUILD_DIR: ${{ github.workspace }}/../unicorn/build
 
