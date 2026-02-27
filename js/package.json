@@ -1,0 +1,22 @@
+{
+  "name": "anisette-js",
+  "version": "0.1.0",
+  "description": "High-level JavaScript/TypeScript API for Apple Anisette headers via WASM",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outfile dist/anisette.js --target node --format esm --minify",
+    "build:cjs": "bun build src/index.ts --outfile dist/anisette.cjs --target node --format cjs --minify",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

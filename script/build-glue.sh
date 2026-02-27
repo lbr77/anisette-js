@@ -95,6 +95,18 @@ echo "  ${DIST_DIR}/anisette_rs.wasm"
 echo "  ${NODE_DIST_JS}"
 echo "  ${NODE_DIST_WASM}"
 
+# Bundle TS API + glue into a single JS file
+JS_DIR="${ROOT_DIR}/js"
+if command -v bun >/dev/null 2>&1 && [[ -f "${JS_DIR}/src/index.ts" ]]; then
+  echo "bundling TS API..."
+  bun build "${JS_DIR}/src/index.ts" \
+    --outfile "${DIST_DIR}/anisette.js" \
+    --target node \
+    --format esm \
+    --minify
+  echo "  ${DIST_DIR}/anisette.js"
+fi
+
 # Copy to frontend if directory exists (skip in CI if not present)
 if [[ -d "${ROOT_DIR}/../../frontend/public/anisette" ]]; then
   cp "${DIST_DIR}/anisette_rs.js" "${ROOT_DIR}/../../frontend/public/anisette/anisette_rs.js"

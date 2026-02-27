@@ -1,3 +1,7 @@
 target/
 test/
 dist/
+cache/
+*.apk
+anisette/*
+js/node_modules/*

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const distDir = path.join(__dirname, 'dist');
+const distDir = path.join(path.join(__dirname, '..'), 'dist')
 const modulePath = path.join(distDir, 'anisette_rs.node.js');
 const wasmPath = path.join(distDir, 'anisette_rs.node.wasm');
 

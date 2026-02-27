@@ -33,25 +33,25 @@ pub(crate) fn trace_mem_invalid_hook(
     let pc = reg_or_zero(uc, RegisterARM64::PC);
     match access {
         MemType::READ_UNMAPPED => {
-            debug_print(format!(
+            println!(
                 ">>> Missing memory is being READ at 0x{address:x}, data size = {size}, data value = 0x{:x}, PC=0x{pc:x}",
                 value as u64
-            ));
+            );
             dump_registers(uc, "read unmapped");
         }
         MemType::WRITE_UNMAPPED => {
-            debug_print(format!(
+            println!(
                 ">>> Missing memory is being WRITE at 0x{address:x}, data size = {size}, data value = 0x{:x}, PC=0x{pc:x}",
                 value as u64
-            ));
+            );
 
             dump_registers(uc, "write unmapped");
         }
         MemType::FETCH_UNMAPPED => {
-            debug_print(format!(
+            println!(
                 ">>> Missing memory is being FETCH at 0x{address:x}, data size = {size}, data value = 0x{:x}, PC=0x{pc:x}",
                 value as u64
-            ));
+            );
         }
         _ => {}
     }
