@@ -1,6 +1,6 @@
 // Main Anisette class — the public-facing API
 
-import type { AnisetteDeviceConfig, AnisetteHeaders, InitOptions } from "./types.js";
+import type { AnisetteHeaders, InitOptions } from "./types.js";
 import type { HttpClient } from "./http.js";
 import { WasmBridge } from "./wasm-bridge.js";
 import { Device } from "./device.js";
@@ -12,7 +12,6 @@ import {
   detectLocale,
   encodeUtf8,
 } from "./utils.js";
-import type { DeviceJson } from "./types.js";
 
 const DEFAULT_DSID = BigInt(-2);
 const DEFAULT_LIBRARY_PATH = "./anisette/";
@@ -30,25 +29,39 @@ export interface AnisetteOptions {
 export class Anisette {
   private bridge: WasmBridge;
   private device: Device;
-  private libs: LibraryStore;
   private provisioning: ProvisioningSession;
   private dsid: bigint;
+  private provisioningPath: string;
   private libraryPath: string;
+  private libs: LibraryStore;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private wasmModule: any;
+  private identifier: string;
+  private httpClient: HttpClient | undefined;
 
   private constructor(
     bridge: WasmBridge,
     device: Device,
-    libs: LibraryStore,
     provisioning: ProvisioningSession,
     dsid: bigint,
-    libraryPath: string
+    provisioningPath: string,
+    libraryPath: string,
+    libs: LibraryStore,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    wasmModule: any,
+    identifier: string,
+    httpClient: HttpClient | undefined,
   ) {
     this.bridge = bridge;
     this.device = device;
-    this.libs = libs;
     this.provisioning = provisioning;
     this.dsid = dsid;
+    this.provisioningPath = provisioningPath;
     this.libraryPath = libraryPath;
+    this.libs = libs;
+    this.wasmModule = wasmModule;
+    this.identifier = identifier;
+    this.httpClient = httpClient;
   }
 
   // ---- factory methods ----
@@ -83,13 +96,19 @@ export class Anisette {
     const dsid = options.dsid ?? DEFAULT_DSID;
 
     // Load or generate device config
-    const device = Device.fromJson(null, initOpts.deviceConfig);
+    const savedDeviceJson = initOpts.deviceJsonBytes
+      ? (() => { try { return JSON.parse(new TextDecoder().decode(initOpts.deviceJsonBytes)) as import("./types.js").DeviceJson; } catch { return null; } })()
+      : null;
+    const device = Device.fromJson(savedDeviceJson, initOpts.deviceConfig);
 
-    // Write device.json into WASM VFS so the emulator can read it
-    const deviceJson = device.toJson();
-    const deviceJsonBytes = encodeUtf8(JSON.stringify(deviceJson, null, 2));
+    // Restore adi.pb into VFS if provided
+    if (initOpts.adiPb) {
+      bridge.writeVirtualFile(joinPath(provisioningPath, "adi.pb"), initOpts.adiPb);
+    }
+
+    // Write device.json into WASM VFS
+    const deviceJsonBytes = initOpts.deviceJsonBytes ?? encodeUtf8(JSON.stringify(device.toJson(), null, 2));
     bridge.writeVirtualFile(joinPath(libraryPath, "device.json"), deviceJsonBytes);
-
     // Initialize WASM ADI
     bridge.initFromBlobs(
       libs.storeservicescore,
@@ -105,58 +124,9 @@ export class Anisette {
       options.httpClient
     );
 
-    return new Anisette(bridge, device, libs, provisioning, dsid, libraryPath);
-  }
+    const identifier = initOpts.identifier ?? device.adiIdentifier;
 
-  /**
-   * Load a previously saved session (device.json + adi.pb written back into VFS).
-   * Pass the saved device.json and adi.pb bytes alongside the library blobs.
-   */
-  static async fromSaved(
-    storeservicescore: Uint8Array,
-    coreadi: Uint8Array,
-    deviceJsonBytes: Uint8Array,
-    adiPbBytes: Uint8Array,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    wasmModule: any,
-    options: AnisetteOptions = {}
-  ): Promise<Anisette> {
-    const bridge = new WasmBridge(wasmModule);
-    const initOpts = options.init ?? {};
-    const libraryPath = initOpts.libraryPath ?? DEFAULT_LIBRARY_PATH;
-    const provisioningPath = initOpts.provisioningPath ?? libraryPath;
-    const dsid = options.dsid ?? DEFAULT_DSID;
-
-    // Parse saved device config
-    let deviceJson: DeviceJson | null = null;
-    try {
-      deviceJson = JSON.parse(new TextDecoder().decode(deviceJsonBytes)) as DeviceJson;
-    } catch {
-      // ignore parse errors — will generate fresh device
-    }
-    const device = Device.fromJson(deviceJson, initOpts.deviceConfig);
-
-    // Restore VFS files
-    bridge.writeVirtualFile(joinPath(libraryPath, "device.json"), deviceJsonBytes);
-    bridge.writeVirtualFile(joinPath(libraryPath, "adi.pb"), adiPbBytes);
-
-    const libs = LibraryStore.fromBlobs(storeservicescore, coreadi);
-
-    bridge.initFromBlobs(
-      libs.storeservicescore,
-      libs.coreadi,
-      libraryPath,
-      provisioningPath,
-      initOpts.identifier ?? device.adiIdentifier
-    );
-
-    const provisioning = new ProvisioningSession(
-      bridge,
-      device,
-      options.httpClient
-    );
-
-    return new Anisette(bridge, device, libs, provisioning, dsid, libraryPath);
+    return new Anisette(bridge, device, provisioning, dsid, provisioningPath, libraryPath, libs, wasmModule, identifier, options.httpClient);
   }
 
   // ---- public API ----
@@ -171,8 +141,22 @@ export class Anisette {
     await this.provisioning.provision(this.dsid);
   }
 
+  /** Read adi.pb from the WASM VFS for persistence. */
+  getAdiPb(): Uint8Array {
+    return this.bridge.readVirtualFile(joinPath(this.provisioningPath, "adi.pb"));
+  }
+
   /** Generate Anisette headers. Throws if not provisioned. */
   async getData(): Promise<AnisetteHeaders> {
+    // Reinit WASM state before each call to avoid emulator corruption on repeated use
+    const adiPb = this.bridge.readVirtualFile(joinPath(this.provisioningPath, "adi.pb"));
+    const deviceJsonBytes = encodeUtf8(JSON.stringify(this.device.toJson(), null, 2));
+    this.bridge = new WasmBridge(this.wasmModule);
+    this.bridge.writeVirtualFile(joinPath(this.provisioningPath, "adi.pb"), adiPb);
+    this.bridge.writeVirtualFile(joinPath(this.libraryPath, "device.json"), deviceJsonBytes);
+    this.bridge.initFromBlobs(this.libs.storeservicescore, this.libs.coreadi, this.libraryPath, this.provisioningPath, this.identifier);
+    this.provisioning = new ProvisioningSession(this.bridge, this.device, this.httpClient);
+
     const { otp, machineId } = this.bridge.requestOtp(this.dsid);
 
     const now = new Date();

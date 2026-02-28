@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(cat:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(bun run:*)",
+      "Bash(bun:*)",
+      "Bash(NODE_TLS_REJECT_UNAUTHORIZED=0 bun:*)"
     ],
     "deny": [],
     "ask": []

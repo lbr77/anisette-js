@@ -16,8 +16,8 @@ NODE_DIST_WASM="${DIST_DIR}/anisette_rs.node.wasm"
 
 
 
-WEB_EXPORTED_FUNCTIONS='["_malloc","_free","_anisette_init_from_blobs","_anisette_is_machine_provisioned","_anisette_start_provisioning","_anisette_end_provisioning","_anisette_request_otp","_anisette_get_cpim_ptr","_anisette_get_cpim_len","_anisette_get_session","_anisette_get_otp_ptr","_anisette_get_otp_len","_anisette_get_mid_ptr","_anisette_get_mid_len","_anisette_last_error_ptr","_anisette_last_error_len","_anisette_fs_write_file","_anisette_idbfs_init","_anisette_idbfs_sync","_anisette_set_identifier","_anisette_set_provisioning_path"]'
-NODE_EXPORTED_FUNCTIONS='["_malloc","_free","_anisette_init_from_blobs","_anisette_is_machine_provisioned","_anisette_start_provisioning","_anisette_end_provisioning","_anisette_request_otp","_anisette_get_cpim_ptr","_anisette_get_cpim_len","_anisette_get_session","_anisette_get_otp_ptr","_anisette_get_otp_len","_anisette_get_mid_ptr","_anisette_get_mid_len","_anisette_last_error_ptr","_anisette_last_error_len","_anisette_fs_write_file","_anisette_set_identifier","_anisette_set_provisioning_path"]'
+WEB_EXPORTED_FUNCTIONS='["_malloc","_free","_anisette_init_from_blobs","_anisette_is_machine_provisioned","_anisette_start_provisioning","_anisette_end_provisioning","_anisette_request_otp","_anisette_get_cpim_ptr","_anisette_get_cpim_len","_anisette_get_session","_anisette_get_otp_ptr","_anisette_get_otp_len","_anisette_get_mid_ptr","_anisette_get_mid_len","_anisette_last_error_ptr","_anisette_last_error_len","_anisette_fs_write_file","_anisette_fs_read_file","_anisette_fs_read_ptr","_anisette_fs_read_len","_anisette_idbfs_sync","_anisette_set_identifier","_anisette_set_provisioning_path"]'
+NODE_EXPORTED_FUNCTIONS='["_malloc","_free","_anisette_init_from_blobs","_anisette_is_machine_provisioned","_anisette_start_provisioning","_anisette_end_provisioning","_anisette_request_otp","_anisette_get_cpim_ptr","_anisette_get_cpim_len","_anisette_get_session","_anisette_get_otp_ptr","_anisette_get_otp_len","_anisette_get_mid_ptr","_anisette_get_mid_len","_anisette_last_error_ptr","_anisette_last_error_len","_anisette_fs_write_file","_anisette_fs_read_file","_anisette_fs_read_ptr","_anisette_fs_read_len","_anisette_set_identifier","_anisette_set_provisioning_path"]'
 WEB_EXPORTED_RUNTIME_METHODS='["FS","HEAPU8","UTF8ToString","stringToUTF8","lengthBytesUTF8"]'
 NODE_EXPORTED_RUNTIME_METHODS='["HEAPU8","UTF8ToString","stringToUTF8","lengthBytesUTF8"]'
 
@@ -103,7 +103,7 @@ if command -v bun >/dev/null 2>&1 && [[ -f "${JS_DIR}/src/index.ts" ]]; then
     --outfile "${DIST_DIR}/anisette.js" \
     --target node \
     --format esm \
-    --minify
+    --minify-syntax --minify-whitespace
   echo "  ${DIST_DIR}/anisette.js"
 fi
 

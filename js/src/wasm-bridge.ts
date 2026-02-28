@@ -101,6 +101,22 @@ export class WasmBridge {
   }
 
   /**
+   * Read a file from the WASM virtual filesystem.
+   */
+  readVirtualFile(filePath: string): Uint8Array {
+    const pathPtr = this.allocCString(filePath);
+    try {
+      const result = this.m._anisette_fs_read_file(pathPtr) as number;
+      this.check(result, `anisette_fs_read_file(${filePath})`);
+    } finally {
+      this.free(pathPtr);
+    }
+    const ptr = this.m._anisette_fs_read_ptr() as number;
+    const len = this.m._anisette_fs_read_len() as number;
+    return this.readBytes(ptr, len);
+  }
+
+  /**
    * Write a file into the WASM virtual filesystem.
    */
   writeVirtualFile(filePath: string, data: Uint8Array): void {

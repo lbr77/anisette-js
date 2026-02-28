@@ -3,7 +3,7 @@ use std::ffi::{CStr, c_char};
 use std::fs;
 use std::path::Path;
 
-use crate::{Adi, AdiInit, init_idbfs_for_path, sync_idbfs};
+use crate::{Adi, AdiInit, sync_idbfs};
 
 #[derive(Default)]
 struct ExportState {
@@ -13,6 +13,7 @@ struct ExportState {
     session: u32,
     otp: Vec<u8>,
     mid: Vec<u8>,
+    read_buf: Vec<u8>,
 }
 
 thread_local! {
@@ -407,15 +408,15 @@ pub extern "C" fn anisette_fs_write_file(
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn anisette_idbfs_init(path: *const c_char) -> i32 {
-    let result = (|| -> Result<(), String> {
+pub extern "C" fn anisette_fs_read_file(path: *const c_char) -> i32 {
+    let result = (|| -> Result<Vec<u8>, String> {
         let path = unsafe { c_string(path)? };
-        init_idbfs_for_path(&path)?;
-        Ok(())
+        fs::read(&path).map_err(|e| format!("failed to read '{path}': {e}"))
     })();
 
     match result {
-        Ok(()) => {
+        Ok(data) => {
+            STATE.with(|state| state.borrow_mut().read_buf = data);
             clear_last_error();
             0
         }
@@ -424,6 +425,16 @@ pub extern "C" fn anisette_idbfs_init(path: *const c_char) -> i32 {
             -1
         }
     }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn anisette_fs_read_ptr() -> *const u8 {
+    STATE.with(|state| state.borrow().read_buf.as_ptr())
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn anisette_fs_read_len() -> usize {
+    STATE.with(|state| state.borrow().read_buf.len())
 }
 
 #[unsafe(no_mangle)]

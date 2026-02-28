@@ -33,6 +33,10 @@ export interface InitOptions {
   identifier?: string;
   /** Override parts of the generated device config */
   deviceConfig?: Partial<AnisetteDeviceConfig>;
+  /** Existing adi.pb bytes to restore into the WASM VFS (for resuming a provisioned session) */
+  adiPb?: Uint8Array;
+  /** Existing device.json bytes to restore into the WASM VFS */
+  deviceJsonBytes?: Uint8Array;
 }
 
 /** Raw device.json structure as stored on disk / in WASM VFS */

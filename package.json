@@ -3,9 +3,9 @@
   "scripts": {
     "build:unicorn": "bash script/rebuild-unicorn.sh",
     "build:glue": "bash script/build-glue.sh",
-    "build:release": "bash script/build-glue.sh --release",
     "build:js": "cd js && bun install && bun run build",
     "build": "bash script/build-glue.sh && cd js && bun install && bun run build",
+    "release": "bash script/build-glue.sh --release && cd js && bun install && bun run build",
     "run:node": "node example/run-node.mjs",
     "run:api": "node example/anisette-api.mjs"
   }
