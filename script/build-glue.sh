@@ -8,7 +8,7 @@ fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET_DIR="${ROOT_DIR}/target/wasm32-unknown-emscripten/${BUILD_MODE}"
-DIST_DIR="${ROOT_DIR}/dist"
+DIST_DIR="${ROOT_DIR}/js/src"
 # EMSDK_DIR="${EMSDK:-/Users/libr/Desktop/Life/emsdk}"
 UNICORN_BUILD_DIR="${UNICORN_BUILD_DIR:-${ROOT_DIR}/../unicorn/build}"
 NODE_DIST_JS="${DIST_DIR}/anisette_rs.node.js"
@@ -66,6 +66,7 @@ emcc \
   -sEXPORT_ES6=1 \
   -sENVIRONMENT=web \
   -sWASM=1 \
+  -sSINGLE_FILE=1 \
   -sALLOW_MEMORY_GROWTH=1 \
   -sINITIAL_MEMORY=268435456 \
   -sWASM_BIGINT=1 \
@@ -81,6 +82,7 @@ emcc \
   -sEXPORT_ES6=1 \
   -sENVIRONMENT=node \
   -sWASM=1 \
+  -sSINGLE_FILE=1 \
   -sALLOW_MEMORY_GROWTH=1 \
   -sINITIAL_MEMORY=268435456 \
   -sWASM_BIGINT=1 \
@@ -91,24 +93,4 @@ emcc \
 
 echo "glue build done:"
 echo "  ${DIST_DIR}/anisette_rs.js"
-echo "  ${DIST_DIR}/anisette_rs.wasm"
-echo "  ${NODE_DIST_JS}"
-echo "  ${NODE_DIST_WASM}"
-
-# Bundle TS API + glue into a single JS file
-JS_DIR="${ROOT_DIR}/js"
-if command -v bun >/dev/null 2>&1 && [[ -f "${JS_DIR}/src/index.ts" ]]; then
-  echo "bundling TS API..."
-  bun build "${JS_DIR}/src/index.ts" \
-    --outfile "${DIST_DIR}/anisette.js" \
-    --target node \
-    --format esm \
-    --minify-syntax --minify-whitespace
-  echo "  ${DIST_DIR}/anisette.js"
-fi
-
-# Copy to frontend if directory exists (skip in CI if not present)
-if [[ -d "${ROOT_DIR}/../../frontend/public/anisette" ]]; then
-  cp "${DIST_DIR}/anisette_rs.js" "${ROOT_DIR}/../../frontend/public/anisette/anisette_rs.js"
-  cp "${DIST_DIR}/anisette_rs.wasm" "${ROOT_DIR}/../../frontend/public/anisette/anisette_rs.wasm"
-fi
+echo "  ${DIST_DIR}/anisette_rs.node.js"

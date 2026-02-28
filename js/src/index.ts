@@ -1,7 +1,6 @@
 // Public entry point — re-exports everything users need
 
 export { Anisette } from "./anisette.js";
-export { loadWasm } from "./wasm-loader.js";
 export { WasmBridge } from "./wasm-bridge.js";
 export { Device } from "./device.js";
 export { LibraryStore } from "./library.js";
@@ -15,3 +14,12 @@ export type {
   DeviceJson,
 } from "./types.js";
 export type { AnisetteOptions } from "./anisette.js";
+
+export {
+  loadWasmModule,
+  loadWasmModule as loadWasm,
+  isNodeEnvironment,
+  getWasmBinaryPath,
+  type EmscriptenModule,
+  type ModuleOverrides,
+} from "./wasm-loader.js";

@@ -10,14 +10,15 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const bundlePath = path.join(__dirname, "..", "dist", "anisette.js");
+const {Anisette, loadWasm} = await import("../js/dist");
+// const bundlePath = path.join(__dirname, "..", "dist", "anisette.js");
 
-const { Anisette, loadWasm } = await import(
-  pathToFileURL(bundlePath).href
-).catch(() => {
-  console.error("Bundle not found. Run: npm run build:js");
-  process.exit(1);
-});
+// const { Anisette, loadWasm } = await import(
+//   pathToFileURL(bundlePath).href
+// ).catch(() => {
+//   console.error("Bundle not found. Run: npm run build:js");
+//   process.exit(1);
+// });
 
 const args = process.argv.slice(2);
 if (args.length < 2) {

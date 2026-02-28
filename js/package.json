@@ -7,16 +7,24 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./src/browser.ts",
+      "node": "./src/index.ts"
     }
   },
+  "files": [
+    "dist",
+    "./src/anisette_rs.js",
+    "./src/anisette_rs.node.js"
+  ],
   "scripts": {
-    "build": "bun build src/index.ts --outfile ../dist/anisette.js --target node --format esm --minify-syntax --minify-whitespace",
-    "build:cjs": "bun build src/index.ts --outfile dist/anisette.cjs --target node --format cjs --minify",
+    "build": "tsc && cp src/anisette_rs.js dist/ && cp src/anisette_rs.node.js dist/",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "@types/node": "^25.3.2"
   }
 }

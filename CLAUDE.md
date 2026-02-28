@@ -1,91 +1,58 @@
-# AGENTS.md
+# CLAUDE.md
 
-This file provides guidance to Every Agents when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Overview
 
-This crate provides Apple Anisette authentication in browser via WebAssembly. It uses a custom Unicorn Engine fork (https://github.com/lbr77/unicorn/tree/tci-emscripten) to emulate ARM64 Android binaries (`libstoreservicescore.so` + `libCoreADI.so`) for generating Anisette headers.
+Rust/WASM project that emulates ARM64 Android binaries (`libstoreservicescore.so` + `libCoreADI.so`) via a custom Unicorn Engine fork to generate Apple Anisette headers in the browser or Node.js.
 
-**Note**: The Android library blobs (`libstoreservicescore.so`, `libCoreADI.so`) are not included in this repository. Extract them from an APK or obtain separately.
+The Android library blobs are not included — extract from an APK or obtain separately.
 
 ## Build Commands
 
-### Prerequisites
-
-- Rust nightly (edition 2024)
-- Emscripten SDK (for WASM builds)
-
-### Setup Unicorn Engine
-
-Clone the custom Unicorn repository and checkout to the `tci-emscripten` branch:
-
+Must source Emscripten before building WASM:
 ```bash
-git clone https://github.com/lbr77/unicorn.git
-cd unicorn && git checkout tci-emscripten
+source "/Users/libr/Desktop/Life/emsdk/emsdk_env.sh"
 ```
 
-Then build Unicorn for Emscripten:
-
 ```bash
-bash script/rebuild-unicorn.sh
+bun run build          # WASM (debug) + JS bundle
+bun run release        # WASM (release) + JS bundle
+bun run build:js       # JS bundle only (no WASM rebuild)
+bun run build:glue     # WASM only
+bun run build:unicorn  # Rebuild Unicorn (rarely needed)
 ```
 
-The rebuild script handles:
-- Running `emcmake cmake` with appropriate flags
-- Building only `arm` and `aarch64` architectures
-- Using static archives (`-DUNICORN_LEGACY_STATIC_ARCHIVE=ON`)
+JS bundle outputs to `dist/anisette.js`. WASM glue outputs to `dist/anisette_rs.node.{js,wasm}` and `dist/anisette_rs.{js,wasm}`.
 
-### Build WASM Glue
-
-```bash
-bash script/build-glue.sh           # Debug build
-bash script/build-glue.sh --release # Release build
-```
-
-Outputs:
-- `test/dist/anisette_rs.js` / `.wasm` (web)
-- `test/dist/anisette_rs.node.js` / `.wasm` (Node.js)
-- Copies to `../../frontend/public/anisette/`
-
-### Run Native Example
-
-```bash
-cargo run --example anisette -- <libstoreservicescore.so> <libCoreADI.so> [library_path] [dsid] [apple_root_pem]
-```
-
-### Run Node.js Example
-
-```bash
-node example/run-node.mjs <libstoreservicescore.so> <libCoreADI.so> [library_path] [dsid] [identifier]
-```
+The `js/package.json` build script also outputs to `../dist/anisette.js` directly.
 
 ## Architecture
 
-### Core Modules
+### Rust → WASM layer (`src/`)
 
-- **`adi.rs`**: ADI (Apple Device Identity) wrapper — provisioning, OTP requests
-- **`emu.rs`**: Unicorn-based ARM64 emulator core — library loading, symbol resolution, function calls
-- **`exports.rs`**: C FFI exports for WASM — `anisette_*` functions
-- **`device.rs`**: Device identity management — UUIDs, identifiers, persistence
-- **`idbfs.rs`**: IndexedDB filesystem integration for Emscripten
-- **`provisioning.rs`** / **`provisioning_wasm.rs`**: Apple provisioning protocol
+- `exports.rs` — all `#[no_mangle]` C FFI exports. Every new public function must also be added to `EXPORTED_FUNCTIONS` in `script/build-glue.sh` (both `WEB_EXPORTED_FUNCTIONS` and `NODE_EXPORTED_FUNCTIONS` as appropriate).
+- `adi.rs` — wraps the emulated ADI library calls
+- `emu.rs` — Unicorn ARM64 emulator core
+- `idbfs.rs` — Emscripten IndexedDB FS integration (browser only)
 
-### Emulator Memory Layout
+### JS/TS layer (`js/src/`)
 
-- Libraries mapped to import address space with stub hooks
-- Stack, heap, and return addresses pre-allocated
-- Import hooks dispatch to runtime stubs
+- `anisette.ts` — main `Anisette` class. **Each `getData()` call fully reinits the WASM state** (new `WasmBridge`, re-writes VFS files, re-calls `initFromBlobs`) to work around a Unicorn emulator bug that causes illegal writes on repeated use.
+- `wasm-bridge.ts` — raw pointer/length marshalling to WASM exports
+- `wasm-loader.ts` — thin wrapper around `ModuleFactory`; caller must pass `locateFile` via `moduleOverrides` to resolve the `.wasm` path
+- `provisioning.ts` — Apple provisioning HTTP flow (fetches SPIM, sends CPIM)
+- `device.ts` — loads or generates `device.json`
 
-### Public API (exports.rs)
+### Key design decisions
 
-- `anisette_init_from_blobs` — Initialize from library blobs
-- `anisette_is_machine_provisioned` — Check provisioning state
-- `anisette_start_provisioning` / `anisette_end_provisioning` — Provisioning flow
-- `anisette_request_otp` — Generate OTP + machine ID headers
+- `adi.pb` (provisioning state) lives in the WASM VFS. After provisioning, call `anisette.getAdiPb()` and persist it yourself — it is **not** automatically written to disk.
+- `fromSo()` accepts `init.adiPb` and `init.deviceJsonBytes` to restore a previous session into the VFS before init.
+- `loadWasm()` is environment-agnostic — no `node:` imports. Pass `locateFile` in `moduleOverrides`.
 
-### Data Flow
+### Example usage
 
-1. Load Android `libstoreservicescore.so` + `libCoreADI.so`
-2. Initialize device identity (`device.json`)
-3. Provision with Apple (if needed)
-4. Request OTP → `X-Apple-I-MD` + `X-Apple-I-MD-M` headers
+```bash
+NODE_TLS_REJECT_UNAUTHORIZED=0 bun example/anisette-api.mjs \
+  <libstoreservicescore.so> <libCoreADI.so> [library_path]
+```
