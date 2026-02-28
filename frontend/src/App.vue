@@ -32,12 +32,13 @@ async function runDemo() {
     status.value = 'Initializing Anisette...'
     const anisette = await Anisette.fromSo(ssBytes, caBytes, wasmModule, {
       httpClient,
-      init: { libraryPath: '/anisette' }
+      init: { libraryPath: './anisette/' }
     })
-    console.log(anisette.getDevice())
     if (!anisette.isProvisioned) {
       status.value = 'Provisioning...'
       await anisette.provision()
+    } else {
+      status.vaule = 'Already provisioned, skipping provisioning step'
     }
 
     status.value = 'Getting headers...'
@@ -52,7 +53,7 @@ async function runDemo() {
 
 <template>
   <div>
-    <h1>Anisette JS Demo</h1>
+    <h1>Anisette Vue Demo</h1>
 
     <div>
       <button @click="runDemo">Run</button>

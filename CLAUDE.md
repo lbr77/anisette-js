@@ -49,6 +49,10 @@ The `js/package.json` build script also outputs to `../dist/anisette.js` directl
 - `adi.pb` (provisioning state) lives in the WASM VFS. After provisioning, call `anisette.getAdiPb()` and persist it yourself — it is **not** automatically written to disk.
 - `fromSo()` accepts `init.adiPb` and `init.deviceJsonBytes` to restore a previous session into the VFS before init.
 - `loadWasm()` is environment-agnostic — no `node:` imports. Pass `locateFile` in `moduleOverrides`.
+- Browser FS/path gotcha:
+  - Prefer `./anisette/` (not `/anisette`) for `libraryPath` / `provisioningPath`.
+  - The Rust emulation stubs currently hardcode `./anisette` and `./anisette/adi.pb` checks in `src/stub.rs` (`mkdir`/`open`), so absolute paths can break provisioning (e.g. `ADIProvisioningEnd -45054`).
+  - In browser flow, mount IDBFS and run `syncfs(true)` before ADI init to avoid VFS state being overwritten later.
 
 ### Example usage
 
