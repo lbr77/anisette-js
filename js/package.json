@@ -1,5 +1,5 @@
 {
-  "name": "anisette-js",
+  "name": "@lbr77/anisette-js",
   "version": "0.1.0",
   "description": "High-level JavaScript/TypeScript API for Apple Anisette headers via WASM",
   "type": "module",
@@ -8,8 +8,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./src/browser.ts",
-      "node": "./src/index.ts"
+      "default": "./src/index.ts",
+      "browser": "./src/browser.ts"
     }
   },
   "files": [
@@ -26,5 +26,13 @@
   },
   "dependencies": {
     "@types/node": "^25.3.2"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lbr77/anisette-js.git"
   }
 }
