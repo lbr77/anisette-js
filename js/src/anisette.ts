@@ -149,10 +149,12 @@ export class Anisette {
   async provision(): Promise<void> {
     await this.provisioning.provision(this.dsid);
     // Sync provisioning state to IndexedDB (browser only)
-    try {
-      await this.bridge.syncIdbfsToStorage();
-    } catch {
-      // Ignore errors in Node.js or if IDBFS unavailable
+    if (this.bridge.isIdbfsAvailable()) {
+      try {
+        await this.bridge.syncIdbfsToStorage();
+      } catch (err) {
+        console.error("[anisette] Failed to sync to IDBFS:", err);
+      }
     }
   }
 
@@ -171,11 +173,15 @@ export class Anisette {
     const deviceJsonBytes = encodeUtf8(JSON.stringify(this.device.toJson(), null, 2));
 
     this.bridge = new WasmBridge(this.wasmModule);
-    mountIdbfsPaths(this.bridge, this.libraryPath, this.provisioningPath);
-    try {
-      await this.bridge.syncIdbfsFromStorage();
-    } catch {
-      // Ignore errors - might be first run or Node.js
+
+    // Mount + load persisted IDBFS in browser environment
+    if (this.bridge.isIdbfsAvailable()) {
+      mountIdbfsPaths(this.bridge, this.libraryPath, this.provisioningPath);
+      try {
+        await this.bridge.syncIdbfsFromStorage();
+      } catch {
+        // Ignore errors - might be first run or no existing data
+      }
     }
 
     if (adiPb) {

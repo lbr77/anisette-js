@@ -217,12 +217,23 @@ export class WasmBridge {
   }
 
   /**
+   * Check if IDBFS is available (browser environment only).
+   */
+  isIdbfsAvailable(): boolean {
+    try {
+      return !!(this.m.FS && this.m.FS.filesystems?.IDBFS);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Initialize IDBFS for browser persistence.
    * Only works in browser environments with IDBFS available.
    */
   initIdbfs(path: string): void {
     // Check if FS and IDBFS are available (browser only)
-    if (!this.m.FS || !this.m.FS.filesystems?.IDBFS) {
+    if (!this.isIdbfsAvailable()) {
       return; // Node.js or environment without IDBFS
     }
 
@@ -248,10 +259,11 @@ export class WasmBridge {
   /**
    * Sync IDBFS from IndexedDB to memory (async).
    * Must be called after initIdbfs to load existing data from IndexedDB.
+   * Only works in browser environments with IDBFS available.
    */
   async syncIdbfsFromStorage(): Promise<void> {
-    if (!this.m.FS) {
-      return; // FS not available
+    if (!this.isIdbfsAvailable()) {
+      return; // IDBFS not available, skip silently
     }
 
     return new Promise((resolve, reject) => {
@@ -269,10 +281,11 @@ export class WasmBridge {
   /**
    * Sync IDBFS from memory to IndexedDB (async).
    * Must be called after modifying files to persist them.
+   * Only works in browser environments with IDBFS available.
    */
   async syncIdbfsToStorage(): Promise<void> {
-    if (!this.m.FS) {
-      return; // FS not available
+    if (!this.isIdbfsAvailable()) {
+      return; // IDBFS not available, skip silently
     }
 
     return new Promise((resolve, reject) => {
