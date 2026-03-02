@@ -100,7 +100,8 @@ export class Anisette {
     mountIdbfsPaths(bridge, libraryPath, provisioningPath);
     try {
       await bridge.syncIdbfsFromStorage();
-    } catch {
+    } catch (err) {
+      console.log("[anisette] Failed to sync IDBFS from storage:", err);
       // Ignore errors - might be first run with no existing data
     }
 

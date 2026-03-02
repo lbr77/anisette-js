@@ -10,7 +10,7 @@ export async function initLibcurl(): Promise<void> {
     const wsProto = location.protocol === "https:" ? "wss:" : "ws:";
     let wsUrl = `${wsProto}//${location.host}/wisp/`;
     libcurl.set_websocket(wsUrl);
-    await libcurl.load_wasm("/libcurl.wasm");
+    await libcurl.load_wasm();
     initialized = true;
   })();
 
